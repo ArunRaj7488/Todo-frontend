@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import "../Styles/Todo.style.css";
 import ToDoService from "../Services/ToDo.service";
 import cn from "classnames";
-const ids = [];
 const Todo = () => {
   // Declare a new state variable, which we'll call "count"
   let [todoList, setTodoList] = useState([]);
