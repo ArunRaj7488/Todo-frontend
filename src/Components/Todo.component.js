@@ -1,35 +1,40 @@
 import React, { useEffect, useState } from "react";
-import "../Styles/Todo.style.css";
 import ToDoService from "../Services/ToDo.service";
+import "../Styles/Todo.style.css";
 import cn from "classnames";
+
 const Todo = () => {
   // Declare a new state variable, which we'll call "count"
-  let [todoList, setTodoList] = useState([]);
-  let [filter, setFilter] = useState("all");
+  const [todoList, setTodoList] = useState([]);
+  const [filter, setFilter] = useState("all");
 
   // on press enter key add todo data
   const onHandleKeyPress = async (e) => {
-    if (e.key === "Enter") {
-      let { data } = await ToDoService.createTodo({ todo: e.target.value });
-      // setTodo(data)
-      todoList.push(data);
-      setTodoList([...todoList]);
-      // set empty input filed after enter
-      e.target.value = "";
+    if (e.key === "Enter" && e.target.value !== "") {
+      await ToDoService.createTodo({ todo: e.target.value })
+        .then((res) => {
+          if (res["data"]) {
+            todoList.push(res["data"]);
+            setTodoList([...todoList]);
+            // set empty input filed after enter
+            e.target.value = "";
+          }
+        })
+        .catch((err) => console.log(err));
     }
   };
 
-  // get all to todo list
-  const getAllTodolist = async () => {
-    let todoList = await ToDoService.getTodo();
-    return todoList;
-  };
   // delete single todo
   const deleteSingleTodo = async (index) => {
     const todo = todoList[index];
-    let result = await ToDoService.deleteSingleTodo(todo._id);
-    todoList.splice(index, 1);
-    setTodoList([...todoList]);
+    await ToDoService.deleteSingleTodo(todo._id)
+      .then((res) => {
+        if (res["data"]) {
+          todoList.splice(index, 1);
+          setTodoList([...todoList]);
+        }
+      })
+      .catch((err) => console.log(err));
   };
   // check todo list and update is completed
   const onCheckedTodo = async (e, index) => {
@@ -37,26 +42,31 @@ const Todo = () => {
     const todo = newTodos[index];
     todo.completed = !todo.completed;
     setTodoList(newTodos);
-    // call update todo srvice
-    let update = await ToDoService.updateTodo(todo["_id"], {
+    // call update todo service
+    await ToDoService.updateTodo(todo["_id"], {
       completed: todo.completed,
-    });
+    })
+      .then((res) => console.log(res))
+      .catch((err) => console.log(err));
   };
 
   /**
-   * get todolist by query
+   * get todo list by query
    * all -> {}
-   * active -> {completed: flase}
+   * active -> {completed: false}
    * completed -> { completed: true}
-   * @param {*} query
+   * @param {*} query ,filter
    */
   const getTodoListByQuery = async (query, filter) => {
     setFilter(filter);
-    let result = await ToDoService.getTodoByQuery(query);
-    setTodoList(result["data"]);
+    const result = await ToDoService.getTodoByQuery(query)
+      .then((res) => {
+        setTodoList(result["data"]);
+      })
+      .catch((err) => console.log(err));
   };
 
-  // cleare All completed todolist
+  // clear All completed todo list
   const clearAllCompletedTodos = async () => {
     const ids = [];
     todoList.reduce((acc, todo) => {
@@ -68,7 +78,11 @@ const Todo = () => {
     }, ids);
     const newTodos = todoList.filter((todo) => !ids.includes(todo._id));
     setTodoList(newTodos);
-    let result = await ToDoService.deleteMultipleTodo(ids);
+    await ToDoService.deleteMultipleTodo(ids)
+      .then((res) => console.log(res))
+      .catch((err) => {
+        console.log(err);
+      });
   };
 
   // check and uncheck all todo list
@@ -80,17 +94,21 @@ const Todo = () => {
     }));
     setTodoList([...newTodos]);
   };
-
-  useEffect(() => {
-    let mounted = true;
-    getAllTodolist()
+  // get all todo list
+  const getAllTodoList = async () => {
+    await ToDoService.getTodo()
       .then((res) => {
-        if (mounted) {
+        if (res["data"].length > 0) {
           setTodoList(res["data"]);
         }
-        return () => (mounted = false);
       })
-      .catch((err) => {});
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+
+  useEffect(() => {
+    getAllTodoList();
   }, []);
 
   // get active number todo
@@ -118,12 +136,16 @@ const Todo = () => {
         <div className="top-wrapper">
           <section
             onClick={handleOnArrowClicked}
-            className={todoList.length ? "arrow" : "no-arrow"}
+            className={cn({
+              arrow: todoList.length > 0,
+              "no-arrow": todoList.length === 0,
+              "checked-all": Boolean(activeTodoCount) === false,
+              "no-checked": Boolean(activeTodoCount) === true,
+            })}
           ></section>
           <input
             className="input-add-todo"
             placeholder="What needs to be done?"
-            // value={todo}
             autoFocus
             onKeyPress={(e) => onHandleKeyPress(e)}
           />
@@ -135,9 +157,6 @@ const Todo = () => {
                 className={cn({
                   completed: value.completed,
                 })}
-                // data-todo-state={
-                //   value.completed === true ? "completed" : "active"
-                // }
                 key={index}
               >
                 <div className="view">
@@ -148,13 +167,7 @@ const Todo = () => {
                     value={value?.completed}
                     checked={value?.completed}
                   />
-                  <label
-                  //   onDoubleClick={(e) => {
-                  //     send("EDIT");
-                  //   }}
-                  >
-                    {value.todo}
-                  </label>{" "}
+                  <label>{value.todo}</label>{" "}
                   <button
                     className="destroy"
                     onClick={() => deleteSingleTodo(index)}

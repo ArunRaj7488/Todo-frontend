@@ -1,13 +1,7 @@
-import logo from './logo.svg';
-import './App.css';
-import Todo  from './Components/Todo.component';
+import Todo from "./Components/Todo.component";
 
-function App() {
-  return (
-    <div>
-      <Todo />
-    </div>
-  );
-}
+const App = () => {
+  return <Todo />;
+};
 
 export default App;
