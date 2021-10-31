@@ -10,14 +10,16 @@ const Todo = () => {
   let [deleteTodo, setDeleteTodo] = useState([]);
   let [completed, setCompleted] = useState(false);
   let [filter, setFilter] = useState("all")
-
   // on press enter key add todo data
   const onHaldeKeyPress = async (e) => {
     if (e.key === "Enter") {
-      let todoData = await ToDoService.createTodo({ todo: e.target.value });
-      setTodo(todoData);
+      let {data} = await ToDoService.createTodo({ todo: e.target.value });
+      setTodo(data)
+      todoList.push(data)
+      setTodoList([...todoList])
       // set empty input filed after enter
-      e.target.value = ''    }
+      e.target.value = ''
+    }
   };
 
   // get all to todo list
@@ -26,26 +28,22 @@ const Todo = () => {
     return todoList;
   };
   // delete single todo
-  const deleteSingleTodo = async (id) => {
-    let result = await ToDoService.deleteSingleTodo(id);
-    setDeleteTodo([result["data"]]);
+  const deleteSingleTodo = async (index) => {
+    const todo = todoList[index]
+    let result = await ToDoService.deleteSingleTodo(todo._id)
+    todoList.splice(index, 1)
+    setTodoList([...todoList])
   };
   // check todo list
-  const onCheckedTodo = async (e, todo) => {
-    let status = todo["completed"] === false ? true : false;
+  const onCheckedTodo = async (e, index) => {
+    const newTodos = [...todoList]
+    const todo = newTodos[index]
+    todo.completed = !todo.completed
+    setTodoList(newTodos)
     // call update todo srvice
     let update = await ToDoService.updateTodo(todo["_id"], {
-      completed: status,
-    });
-    setDeleteTodo([status])
-    setCompleted(status);
-    // check todo list id add in array list for deleteing todos use
-    let checkIndex = ids.indexOf(todo["_id"]);
-    if (checkIndex === -1) {
-        ids.push(todo["_id"]);
-    } else {
-        ids.splice(checkIndex, 1);
-    }
+      completed: todo.completed
+    })
   };
  
   /**
@@ -58,53 +56,66 @@ const Todo = () => {
   const getTodoListByQury = async (query, filter) => {
     setFilter(filter)
     let result = await ToDoService.getTodoByQuery(query);
-    setTodoList(result["data"]);
+    setTodoList(result["data"])
   };
 
   // cleare All completed todolist
   const clearAllCompletedTodos = async () => {
+    const ids = []
+    todoList.reduce((acc, todo) => {
+      if(todo.completed) {
+        acc.push(todo._id)
+        return acc
+      }
+      return acc
+    }, ids)
+    const newTodos = todoList.filter(todo => !ids.includes(todo._id))
+    setTodoList(newTodos)
     let result = await ToDoService.deleteMultipleTodo(ids);
-    setDeleteTodo([result["data"]]);
   };
+
+  const handleOnArrowClicked = (e) => {
+    e.preventDefault()
+    const newTodos = todoList.map(todo => ({
+      ...todo,
+      completed: Boolean(activeTodoCount)
+    }))
+    setTodoList([...newTodos])
+  }
 
   useEffect(async () => {
     let mounted = true;
     getAllTodolist().then((res) => {
       if (mounted) {
-        console.log({ res });
         // get completed todo list Ids for cleare todo
-    res["data"].map(item => {
-            if(item.completed === true){
-                ids.push(item._id)
-            }
-        });
         setTodoList(res["data"]);
       }
       return () => (mounted = false);
+    }).catch(err => {
+      
     });
-  }, [todo, deleteTodo, completed]);
+  }, [])
 
-  const activeTodoCount = todoList.filter(
-    (todo) => !todo["completed"] === true
-  ).length;
-  console.log({ activeTodoCount });
+  const activeTodoCount = todoList.filter((todo) => !todo["completed"] === true).length;
   const allCompleted = todoList.length > 0 && activeTodoCount === 0;
-  console.log({ allCompleted });
   const mark = !allCompleted ? "completed" : "active";
-  console.log( {filter});
   const getFooter = (todoList.length > 0 && filter === "all") || (filter ==="active") || (filter === 'completed') ? true : false;
-  console.log({getFooter});
+
+  const actionButtons = [{title: 'All', id: 'all', cond: {}}, {title: 'Active', id: 'active', cond: {completed: false}}, {title: 'Completed', id: 'completed', cond: {completed: true}}]
   return (
     <section className="todo-body">
       <header>
         <h1 className="title">todos</h1>
-        <input
-          className="input-add-todo"
-          placeholder="What needs to be done?"
-            // value={todo}
-          autoFocus
-          onKeyPress={(e) => onHaldeKeyPress(e)}
-        />
+        <div className='top-wrapper'>
+        <section onClick={handleOnArrowClicked} className={todoList.length ? 'arrow': 'no-arrow'}></section>
+          <input
+            className="input-add-todo"
+            placeholder="What needs to be done?"
+              // value={todo}
+            autoFocus
+            onKeyPress={(e) => onHaldeKeyPress(e)}
+          />
+        </div>
         <ul className="todo-list">
           {todoList &&
             todoList.map((value, index) => (
@@ -120,7 +131,7 @@ const Todo = () => {
                   <input
                     className="toggle"
                     type="checkbox"
-                    onChange={(e) => onCheckedTodo(e, value)}
+                    onChange={(e) => onCheckedTodo(e, index)}
                     value={value?.completed}
                     checked={value?.completed}
                   />
@@ -133,66 +144,30 @@ const Todo = () => {
                   </label>{" "}
                   <button
                     className="destroy"
-                    onClick={() => deleteSingleTodo(value._id)}
+                    onClick={() => deleteSingleTodo(index)}
                   />
                 </div>
               </li>
             ))}
         </ul>
       </header>
-      <section className="main">
-        <input
-          id="toggle-all"
-          className="toggle-all"
-          type="checkbox"
-          onChange={(e) => {
-            console.log({ e });
-          }}
-          checked={allCompleted}
-        />
-        <label htmlFor="toggle-all" title={`Mark all as ${mark}`}>
-          Mark all as {mark}
-        </label>
-      </section>
       { getFooter && (
         <footer className="footer">
           <span className="todo-count">
             <strong>{activeTodoCount}</strong> item
             {activeTodoCount === 1 ? "" : "s"} left
           </span>
-          <ul className="filters">
-            <li>
-              <button
-                className={cn({
-                  selected: filter === "all"
-                })}
-                onClick={() => getTodoListByQury({}, 'all')}
-              >
-                All
-              </button>
-            </li>
-            <li>
-              <button
-                className={cn({
-                  selected: filter === "active"
-                })}
-                onClick={() => getTodoListByQury({completed: false}, 'active')}
-              >
-                Active
-              </button>
-            </li>
-            <li>
-              <button
-                className={cn({
-                  selected: filter == 'completed',
-                })}
-                className
-                onClick={() => getTodoListByQury({completed: true}, 'completed')}
-              >
-                Completed
-              </button>
-            </li>
-          </ul>
+          {actionButtons.map(item => (
+            <button
+              className={cn({
+                selected: filter === item.id,
+                'btn-border': true
+              })}
+              onClick={() => getTodoListByQury(item.cond, item.id)}
+            >
+              {item.title}
+            </button>
+          ))}
           {activeTodoCount < todoList.length && (
             <button onClick={clearAllCompletedTodos} className="clear-completed">
               Clear completed

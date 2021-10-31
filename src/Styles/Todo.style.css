@@ -1,4 +1,6 @@
-
+::root {
+	font: 14px 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
 body {
 	font: 14px 'Helvetica Neue', Helvetica, Arial, sans-serif;
 	line-height: 1.4em;
@@ -55,6 +57,43 @@ body {
 /* input{
 
 } */
+
+
+.top-wrapper {
+	display: flex;
+	box-shadow: inset 0 -2px 1px rgb(0 0 0 / 3%);
+}
+.arrow {
+    position: relative;
+    padding: 10px;
+    line-height: 40px;
+    flex: 1;
+    cursor: pointer;
+    right: -20px;
+}
+.arrow::after {
+	content: '❯';
+	display: inline-block;
+	font-size: 22px;
+	color: #949494;
+	transform: rotate(90deg);
+}
+.no-arrow {
+    position: relative;
+    padding: 10px;
+    line-height: 40px;
+    flex: 1;
+    cursor: pointer;
+    right: -20px;
+}
+.no-arrow::after {
+	content: '';
+	display: inline-block;
+	font-size: 22px;
+	color: #949494;
+	transform: rotate(90deg);
+}
+
 .input-add-todo
  {
 	position: relative;
@@ -74,11 +113,11 @@ body {
 }
 
 .input-add-todo {
-	padding: 16px 16px 16px 60px;
+	outline: none;
 	height: 65px;
 	border: none;
-	background: rgba(0, 0, 0, 0.003);
 	box-shadow: inset 0 -2px 1px rgba(0,0,0,0.03);
+	flex:  8;
 }
 
 
@@ -105,7 +144,6 @@ body {
 	height: 65px;
 	font-size: 0;
 	position: absolute;
-	top: -52px;
 	left: -13;
     border: none;
 }
@@ -120,6 +158,7 @@ body {
 	-webkit-transform: rotate(90deg);
 	transform: rotate(90deg);
 }
+
 
 .toggle-all:checked + label:before {
 	color: #484848;
@@ -260,13 +299,25 @@ body {
 
 .footer {
 	padding: 10px 15px;
-	height: 20px;
 	text-align: center;
 	font-size: 15px;
 	border-top: 1px solid #e6e6e6;
 }
+.footer button {
+	cursor: pointer;
+	background: none;
+	border:  none;
+	border-radius: 3px;
+	padding: 3px 7px;
+}
+.selected {
+	outline:  1px solid rgba(175, 47, 47, 0.2) !important;
+}
+.footer .btn-border:hover {
+	outline:  1px solid rgba(175, 47, 47, 0.1) !important;
+}
 
-.footer:before {
+/*.footer:before {
 	content: '';
 	position: absolute;
 	right: 0;
@@ -275,7 +326,7 @@ body {
 	height: 50px;
 	overflow: hidden;
 }
-
+*/
 .todo-count {
 	float: left;
 	text-align: left;
@@ -289,7 +340,6 @@ body {
 	margin: 0;
 	padding: 0;
 	list-style: none;
-	position: absolute;
 	right: 0;
 	left: 0;
 }
