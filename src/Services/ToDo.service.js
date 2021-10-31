@@ -13,7 +13,7 @@ const deleteSingleTodo = (id) => axios.delete(`${url}/delete/single/${id}`);
 
 const deleteMultipleTodo = (ids) => axios.post(`${url}/delete/multiple`, ids);
 
-export default {
+const apis = {
   createTodo,
   getTodo,
   getTodoByQuery,
@@ -21,3 +21,4 @@ export default {
   deleteSingleTodo,
   deleteMultipleTodo,
 };
+export default apis;

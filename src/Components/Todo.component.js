@@ -55,13 +55,13 @@ const Todo = () => {
    * all -> {}
    * active -> {completed: false}
    * completed -> { completed: true}
-   * @param {*} query ,filter
+   *
    */
   const getTodoListByQuery = async (query, filter) => {
     setFilter(filter);
-    const result = await ToDoService.getTodoByQuery(query)
+    await ToDoService.getTodoByQuery(query)
       .then((res) => {
-        setTodoList(result["data"]);
+        if (res["data"] && res["data"].length > 0) setTodoList(res["data"]);
       })
       .catch((err) => console.log(err));
   };
