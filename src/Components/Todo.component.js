@@ -86,13 +86,19 @@ const Todo = () => {
   };
 
   // check and uncheck all todo list
-  const handleOnArrowClicked = (e) => {
+  const handleOnArrowClicked = async (e) => {
     e.preventDefault();
     const newTodos = todoList.map((todo) => ({
       ...todo,
       completed: Boolean(activeTodoCount),
     }));
+    console.log("dshd", Boolean(activeTodoCount));
     setTodoList([...newTodos]);
+    await ToDoService.updateOnMarked({ completed: Boolean(activeTodoCount) })
+      .then((res) => console.log(res))
+      .catch((err) => {
+        console.log(err);
+      });
   };
   // get all todo list
   const getAllTodoList = async () => {
